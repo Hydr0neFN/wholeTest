@@ -15,7 +15,6 @@
 #include "AudioFileSourceSPIFFS.h"
 #include "AudioGeneratorMP3.h"
 #include "AudioOutputI2S.h"
-#include <esp_wifi.h>
 
 // =============================================================================
 // SOUND FILE DEFINITIONS
@@ -53,8 +52,6 @@
 #define DEFAULT_VOLUME        1.0   // Max volume (range 0.0 - 4.0)
 
 // I2S Pins (match PCB schematic - fixed hardware)
-// NOTE: These pins (25/26/27) are ADC2 and conflict with WiFi/ESP-NOW
-// Solution: Disable WiFi during audio playback
 #define I2S_DOUT_PIN          25
 #define I2S_BCLK_PIN          26
 #define I2S_LRC_PIN           27

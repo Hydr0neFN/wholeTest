@@ -12,9 +12,9 @@
  * 
  * Pins:
  * - GPIO4: NeoPixel DIN
- * - GPIO25: I2S DOUT (WiFi disabled during audio playback)
- * - GPIO26: I2S BCLK (WiFi disabled during audio playback)
- * - GPIO27: I2S LRC (WiFi disabled during audio playback)
+ * - GPIO25: I2S DOUT
+ * - GPIO26: I2S BCLK
+ * - GPIO27: I2S LRC
  */
 
 #include <Arduino.h>
@@ -290,7 +290,7 @@ void setup() {
   Serial.begin(115200);
   Serial.println("\n=== HOST TEST (ESP32) ===");
 
-  // Initialize Audio FIRST (before WiFi/ESP-NOW)
+  // Initialize Audio
   if (audio.begin(1.0)) {
     Serial.println("Audio system ready");
   } else {
