@@ -12,9 +12,9 @@
  * 
  * Pins:
  * - GPIO4: NeoPixel DIN
- * - GPIO25: I2S DOUT
- * - GPIO26: I2S BCLK
- * - GPIO27: I2S LRC
+ * - GPIO25: I2S DOUT (WiFi disabled during audio playback)
+ * - GPIO26: I2S BCLK (WiFi disabled during audio playback)
+ * - GPIO27: I2S LRC (WiFi disabled during audio playback)
  */
 
 #include <Arduino.h>
@@ -186,7 +186,7 @@ void runGame() {
         // Initialize players
         players[0] = {true, false, 0, 0};
         players[1] = {true, false, 0, 0};
-        
+
         broadcast(CMD_IDLE, 0);
         audio.queueSound(SND_GET_READY);
         
@@ -289,60 +289,60 @@ void runGame() {
 void setup() {
   Serial.begin(115200);
   Serial.println("\n=== HOST TEST (ESP32) ===");
-  
-  // Initialize NeoPixels
-  pixels.begin();
-  pixels.setBrightness(NEO_BRIGHTNESS);
-  pixels.show();
-  
-  // Initialize Audio
-  if (audio.begin(4.0)) {
+
+  // Initialize Audio FIRST (before WiFi/ESP-NOW)
+  if (audio.begin(1.0)) {
     Serial.println("Audio system ready");
   } else {
     Serial.println("Audio init failed!");
   }
-  
+
+  // Initialize NeoPixels
+  pixels.begin();
+  pixels.setBrightness(NEO_BRIGHTNESS);
+  pixels.show();
+
   // Initialize ESP-NOW
   WiFi.mode(WIFI_STA);
   WiFi.disconnect();
   esp_wifi_set_channel(ESPNOW_CHANNEL, WIFI_SECOND_CHAN_NONE);
-  
+
   if (esp_now_init() != ESP_OK) {
     Serial.println("ESP-NOW init failed!");
     return;
   }
-  
+
   esp_now_register_recv_cb(OnDataRecv);
   esp_now_register_send_cb(OnDataSent);
-  
+
   // Add peers
   esp_now_peer_info_t peerInfo = {};
   peerInfo.channel = ESPNOW_CHANNEL;
   peerInfo.encrypt = false;
   peerInfo.ifidx = WIFI_IF_STA;
-  
+
   // Broadcast
   memcpy(peerInfo.peer_addr, broadcastMac, 6);
   esp_now_add_peer(&peerInfo);
-  
+
   // Display
   memcpy(peerInfo.peer_addr, displayMac, 6);
   if (esp_now_add_peer(&peerInfo) == ESP_OK) {
     Serial.println("Display paired");
   }
-  
+
   // Joystick 1
   memcpy(peerInfo.peer_addr, stick1Mac, 6);
   if (esp_now_add_peer(&peerInfo) == ESP_OK) {
     Serial.println("Joystick 1 paired");
   }
-  
+
   // Joystick 2
   memcpy(peerInfo.peer_addr, stick2Mac, 6);
   if (esp_now_add_peer(&peerInfo) == ESP_OK) {
     Serial.println("Joystick 2 paired");
   }
-  
+
   Serial.print("Host MAC: ");
   Serial.println(WiFi.macAddress());
   Serial.println("Host ready!");

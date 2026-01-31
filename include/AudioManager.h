@@ -15,6 +15,7 @@
 #include "AudioFileSourceSPIFFS.h"
 #include "AudioGeneratorMP3.h"
 #include "AudioOutputI2S.h"
+#include <esp_wifi.h>
 
 // =============================================================================
 // SOUND FILE DEFINITIONS
@@ -51,7 +52,9 @@
 #define AUDIO_QUEUE_SIZE      8
 #define DEFAULT_VOLUME        1.0   // Max volume (range 0.0 - 4.0)
 
-// I2S Pins (match schematic)
+// I2S Pins (match PCB schematic - fixed hardware)
+// NOTE: These pins (25/26/27) are ADC2 and conflict with WiFi/ESP-NOW
+// Solution: Disable WiFi during audio playback
 #define I2S_DOUT_PIN          25
 #define I2S_BCLK_PIN          26
 #define I2S_LRC_PIN           27
@@ -87,7 +90,7 @@ public:
       return false;
     }
 
-    out = new AudioOutputI2S();
+    out = new AudioOutputI2S(); // Use default constructor (external I2S DAC)
     out->SetPinout(I2S_BCLK_PIN, I2S_LRC_PIN, I2S_DOUT_PIN);
     out->SetGain(volume);
 
@@ -169,7 +172,7 @@ public:
         isPlaying = false;
       }
     }
-    
+
     // If not playing and queue has items, start next
     if (!isPlaying && queueHead != queueTail) {
       const char* filename = queue[queueHead];
@@ -178,6 +181,7 @@ public:
       // Check if file exists
       if (SPIFFS.exists(filename)) {
         Serial.printf("[AUDIO] Playing: %s\n", filename);
+
         file = new AudioFileSourceSPIFFS(filename);
         if (mp3->begin(file, out)) {
           isPlaying = true;
