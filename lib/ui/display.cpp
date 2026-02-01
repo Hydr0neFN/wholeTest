@@ -1,7 +1,7 @@
 #include <Arduino.h>
 #include "display.h"
 #include "ui.h"
-#include "lvgl_fs_if.h"
+#include "esp_heap_caps.h"
 
 static lv_disp_draw_buf_t s_draw_buf;
 static lv_color_t* s_buf1 = nullptr;
@@ -29,16 +29,21 @@ void display_init(void)
 {
   Serial.printf("Free heap: %u\n", ESP.getFreeHeap());
   Serial.printf("Free PSRAM: %u\n", ESP.getFreePsram());
+  Serial.printf("Free INTERNAL: %u\n", (unsigned)heap_caps_get_free_size(MALLOC_CAP_INTERNAL));
+  Serial.printf("Free DMA: %u\n", (unsigned)heap_caps_get_free_size(MALLOC_CAP_DMA));
 
   lcd.init();
   lcd.setSwapBytes(true);
   lcd.fillScreen(TFT_BLACK);
   lcd.setBrightness(100);
 
-  constexpr int BUF_LINES = 10;  // start small
+  constexpr int BUF_LINES = 40;  // larger buffer to reduce tearing/flicker
 
-  s_buf1 = (lv_color_t*) ps_malloc(800 * BUF_LINES * sizeof(lv_color_t));
-  s_buf2 = (lv_color_t*) ps_malloc(800 * BUF_LINES * sizeof(lv_color_t));
+  // Use DMA-capable internal memory for display buffers (faster than PSRAM)
+  s_buf1 = (lv_color_t*) heap_caps_malloc(800 * BUF_LINES * sizeof(lv_color_t),
+                                          MALLOC_CAP_INTERNAL | MALLOC_CAP_DMA);
+  s_buf2 = (lv_color_t*) heap_caps_malloc(800 * BUF_LINES * sizeof(lv_color_t),
+                                          MALLOC_CAP_INTERNAL | MALLOC_CAP_DMA);
 
   if (!s_buf1 || !s_buf2) {
     Serial.println("Failed to allocate display buffers!");
@@ -53,9 +58,9 @@ void display_init(void)
   s_disp_drv.ver_res = 480;
   s_disp_drv.flush_cb = lvgl_flush_cb;
   s_disp_drv.draw_buf = &s_draw_buf;
+  s_disp_drv.full_refresh = true;  // Enable full refresh mode
 
   lv_disp_drv_register(&s_disp_drv);
 
-  lvgl_fs_init();
   ui_init();
 }

@@ -1,21 +1,20 @@
 /*
  * display_test.cpp - ESP32-S3 Display Test
- * 
+ *
  * Hardware: ESP32-S3 Touch LCD 7" (800x480)
  * MAC: D0:CF:13:01:D1:A4
- * 
+ *
  * Tests:
  * - LVGL UI (player circles, GO text, reaction times)
  * - ESP-NOW reception from Host
- * - SPIFFS image loading
- * 
+ * - Embedded bitmap images (compiled into firmware)
+ *
  * Pin usage: RGB parallel display (handled by lgfx_conf)
  */
 
 #include <Arduino.h>
 #include <esp_now.h>
 #include <WiFi.h>
-#include <SPIFFS.h>
 #include "lvgl.h"
 #include "ui_lib.h"  // Triggers PlatformIO LDF to compile lib/ui
 #include "Protocol.h"
